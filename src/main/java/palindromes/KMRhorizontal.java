@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -16,31 +15,39 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class KMRHorizontal3 {
-	static Logger logger = Logger.getLogger(KMRHorizontal2.class.getName());
+public class KMRhorizontal {
+	static Logger logger = Logger.getLogger(KMRhorizontal.class.getName());
 	static ConsoleHandler handler = new ConsoleHandler();
-
+	final ArrayList<String> text;
+	final int numRows;
+	final int numCols;
+	final Map<String, String> namings;
+	final ArrayList<String> palindromes;
+	
+	// these could be passed in to the constructor
+	final int palindromeMinLength = 3;
+	final int palindromeMaxLength = 3;
+	
 	public static void main(String[] args) throws IOException {
+		new KMRhorizontal("/Users/hg043696/eclipse-workspace/LAST_TRY/palindromes/src/main/resources/kmrarray.txt");
+	}
+	
+	public KMRhorizontal(String filePath) {
 		logger.setLevel(Level.FINE);
 		handler.setLevel(Level.INFO); // change to FINE to see output from the creatingNamings method
 		logger.addHandler(handler);
-
-		KMRHorizontal3 kmr = new KMRHorizontal3();
-		ArrayList<String> text = kmr.getTextAsList("/Users/hg043696/eclipse-workspace/LAST_TRY/palindromes/src/main/resources/kmrarray.txt");
-
-		final int numRows = text.size();
-		final int numCols = text.get(0).length();
+		
+		text = getTextAsList(filePath);
+		numRows = text.size();
+		numCols = text.get(0).length();
 
 		// 1. step 1 create map of names
-		Map<String, String> namings = new KMRNamings(logger).creatingNamings(text);
+		namings = new KMRNamings(logger).creatingNamings(text);
 		System.out.println("These are all the namings:");
 		System.out.println(namings);
 
 		// 2. step 2 search input array for all maximal palindromes
-		ArrayList<String> palindromes = new ArrayList<String>();
-
-		final int palindromeMinLength = 3;
-		final int palindromeMaxLength = 3;
+		palindromes = new ArrayList<String>();		
 
 		// 2a. For each possible length of palindrome
 		for (int currPalindromeLength = palindromeMinLength; currPalindromeLength <= palindromeMaxLength; currPalindromeLength++) {
@@ -51,28 +58,25 @@ public class KMRHorizontal3 {
 				for (int indexOfMidpointRow = 1; indexOfMidpointRow <= numRows
 						- 1; /* Math.ceil( new Double(numRows) / 2); */ indexOfMidpointRow++) {
 					// 2d. Add all palindromes within this rectangle area to palindrome list
-					searchRectangleForPalindrome(kmr, text, numRows, namings, palindromes, leftIndex,
-							currPalindromeLength, indexOfMidpointRow);
+					searchRectangleForPalindrome(leftIndex, currPalindromeLength, indexOfMidpointRow);
 				}
 			}
 		}
 		System.out.println(Arrays.toString(palindromes.toArray()));
+		
 	}
-
+	
 	// for now assume only mismatches of only 1 are allowed, can refactor later
-	private static void searchRectangleForPalindrome(KMRHorizontal3 kmr, ArrayList<String> text, final int numRows,
-			Map<String, String> namings, ArrayList<String> palindromes, int leftIndex, int currPalindromeLength,
+	private void searchRectangleForPalindrome(int leftIndex, int currPalindromeLength,
 			int indexOfMidpointRow) {
-		kmr.lookForEvenLengthPalindromes(kmr, text, numRows, namings, palindromes, leftIndex,
-				currPalindromeLength, indexOfMidpointRow);
+		//these need to be refactored into one method, called once for even and once for odd
+		
+		lookForEvenLengthPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow);
 
-		kmr.lookForOddLengthPalindromes(kmr, text, numRows, namings, palindromes, leftIndex, currPalindromeLength,
-				indexOfMidpointRow);
+		lookForOddLengthPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow);
 	}
 
-	private void lookForEvenLengthPalindromes(KMRHorizontal3 kmr, ArrayList<String> text, final int numRows,
-			Map<String, String> namings, ArrayList<String> palindromes, int leftIndex, int currPalindromeLength,
-			int indexOfMidpointRow) {
+	private void lookForEvenLengthPalindromes(int leftIndex, int currPalindromeLength, int indexOfMidpointRow) {
 		List<String> aRows = text.subList(0, indexOfMidpointRow);
 		System.out.println(aRows);
 		List<String> listA = aRows.stream().map(s -> {
@@ -90,7 +94,7 @@ public class KMRHorizontal3 {
 			return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength));
 		}).collect(Collectors.joining());
 
-		// (HG) I think this part is for mismatches
+		// (HG) this part is for mismatches
 		if (listA.isEmpty() || listA.contains("")) { // no name for reversed a
 			listA = aRows.stream().map(s -> {
 				String temp = s.substring(leftIndex+1, leftIndex + currPalindromeLength); // should this be leftIndex +1 on both sides?
@@ -111,7 +115,7 @@ public class KMRHorizontal3 {
 		System.out.println("Comparing a and b: " + reversedA + ", " + b);
 		//kmr.checkCommonPrefixAndStepOverMisMatch(kmr, palindromes, a, b, false);
 
-		String commonPrefix = kmr.LCP(reversedA, b);
+		String commonPrefix = this.LCP(reversedA, b);
 
 		if (commonPrefix.length() > 0) {
 			palindromes.add(StringUtils.reverse(reversedA) + b);
@@ -123,9 +127,7 @@ public class KMRHorizontal3 {
 		}
 	}
 	
-	private void lookForOddLengthPalindromes(KMRHorizontal3 kmr, ArrayList<String> text, final int numRows,
-			Map<String, String> namings, ArrayList<String> palindromes, int leftIndex, int currPalindromeLength,
-			int indexOfMidpointRow) {
+	private void lookForOddLengthPalindromes(int leftIndex, int currPalindromeLength, int indexOfMidpointRow) {
 		String commonPrefix;
 		List<String> a1List = text.subList(0, indexOfMidpointRow + 1).stream().map(s -> {
 			String reversedTemp = StringUtils.reverse(s.substring(leftIndex, leftIndex + currPalindromeLength));
@@ -159,7 +161,7 @@ public class KMRHorizontal3 {
 		System.out.println("Comparing a1 and b: " + a1 + ", " + b);
 		// kmr.checkCommonPrefixAndStepOverMisMatch(kmr, palindromes, a1, b, true);
 
-		commonPrefix = kmr.LCP(a1, b);
+		commonPrefix = this.LCP(a1, b);
 		if (commonPrefix.length() > 1) {
 			palindromes.add(StringUtils.reverse(a1) + b.substring(1)); // doing substring 1 to not duplicate the
 																		// midpoint
