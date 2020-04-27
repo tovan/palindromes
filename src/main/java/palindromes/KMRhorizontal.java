@@ -3,6 +3,9 @@ package palindromes;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,8 +31,11 @@ public class KMRhorizontal {
 	final int palindromeMinLength = 3;
 	final int palindromeMaxLength = 3;
 	
-	public static void main(String[] args) throws IOException {
-		new KMRhorizontal("/Users/hg043696/eclipse-workspace/LAST_TRY/palindromes/src/main/resources/kmrarray.txt");
+	public static void main(String[] args) throws IOException, URISyntaxException {
+//		new KMRhorizontal("absolute/file/path goes here").findPalindromes();	
+		URL resource = KMRhorizontal.class.getResource("/kmrarray.txt");
+		String absolutePath = Paths.get(resource.toURI()).toString();
+		new KMRhorizontal(absolutePath).findPalindromes();	
 	}
 	
 	public KMRhorizontal(String filePath) {
@@ -40,14 +46,17 @@ public class KMRhorizontal {
 		text = getTextAsList(filePath);
 		numRows = text.size();
 		numCols = text.get(0).length();
-
 		// 1. step 1 create map of names
 		namings = new KMRNamings(logger).creatingNamings(text);
 		System.out.println("These are all the namings:");
 		System.out.println(namings);
-
-		// 2. step 2 search input array for all maximal palindromes
-		palindromes = new ArrayList<String>();		
+		palindromes = new ArrayList<String>();
+		
+	}
+	
+	//main method
+	public String[] findPalindromes() {
+		// search input array for all maximal palindromes
 
 		// 2a. For each possible length of palindrome
 		for (int currPalindromeLength = palindromeMinLength; currPalindromeLength <= palindromeMaxLength; currPalindromeLength++) {
@@ -63,7 +72,7 @@ public class KMRhorizontal {
 			}
 		}
 		System.out.println(Arrays.toString(palindromes.toArray()));
-		
+		return palindromes.toArray(new String[0]);				
 	}
 	
 	// for now assume only mismatches of only 1 are allowed, can refactor later
