@@ -28,8 +28,8 @@ public class KMRhorizontal {
 	final ArrayList<String> palindromes;
 	
 	// these could be passed in to the constructor
-	final int palindromeMinLength = 3;
-	final int palindromeMaxLength = 3;
+	final int palindromeMinLength = 4;
+	final int palindromeMaxLength = 4;
 	
 	public static void main(String[] args) throws IOException, URISyntaxException {
 //		new KMRhorizontal("absolute/file/path goes here").findPalindromes();	
@@ -78,110 +78,178 @@ public class KMRhorizontal {
 	// for now assume only mismatches of only 1 are allowed, can refactor later
 	private void searchRectangleForPalindrome(int leftIndex, int currPalindromeLength,
 			int indexOfMidpointRow) {
-		//these need to be refactored into one method, called once for even and once for odd
 		
-		lookForEvenLengthPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow);
+		lookForPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow, indexOfMidpointRow, 0, "even");
 
-		lookForOddLengthPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow);
+		lookForPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow+1, indexOfMidpointRow, 1, "odd");
 	}
 
-	private void lookForEvenLengthPalindromes(int leftIndex, int currPalindromeLength, int indexOfMidpointRow) {
-		List<String> aRows = text.subList(0, indexOfMidpointRow);
-		System.out.println(aRows);
+	private void lookForPalindromes(int leftIndex, int currPalindromeLength, int aindexOfMidpointRow, int bindexOfMidpointRow,  int substringIndex, String descr) {
+		List<String> aRows = text.subList(0, aindexOfMidpointRow);
+		System.out.println(descr+" length, aRows: "+aRows.toString());
 		List<String> listA = aRows.stream().map(s -> {
 			String temp = s.substring(leftIndex, leftIndex + currPalindromeLength);
 			System.out.println("looking for name for reverses of: " + temp);
 			String reversedTemp = StringUtils.reverse(temp);
 			String name = StringUtils.defaultIfEmpty(namings.get(reversedTemp), "");
+			if (name != "") {
+				System.out.println("found name: " + name);
+			}
 			return name;
 		}).collect(Collectors.toList());
 		// b's left index must be updated if a's index is
 
-		List<String> bRows = text.subList(indexOfMidpointRow, numRows);
-		System.out.println(bRows);
+		List<String> bRows = text.subList(bindexOfMidpointRow, numRows);
+		System.out.println(descr+" length, bRows: "+bRows);
 		String b = bRows.stream().map(s -> {
-			return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength));
+			String temp = s.substring(leftIndex, leftIndex + currPalindromeLength);
+			System.out.println("looking for name for  " + temp);
+//			String reversedTemp = StringUtils.reverse(temp);
+			String name = StringUtils.defaultIfEmpty(namings.get(temp), "");
+			if (name != "") {
+				System.out.println("found name: " + name);
+			}
+			return name;
+			
+//			return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength));
 		}).collect(Collectors.joining());
 
 		// (HG) this part is for mismatches
+		
+//		boolean onlyEmpties = listA.stream().allMatch(x -> x.equals(""));
+
 		if (listA.isEmpty() || listA.contains("")) { // no name for reversed a
 			listA = aRows.stream().map(s -> {
 				String temp = s.substring(leftIndex+1, leftIndex + currPalindromeLength); // should this be leftIndex +1 on both sides?
 				System.out.println("looking for name for reverses of: " + temp);
 				String reversedTemp = StringUtils.reverse(temp);
 				String name = StringUtils.defaultIfEmpty(namings.get(reversedTemp), "");
+				if (name != "") {
+					System.out.println("found name: " + name);
+				}
 				return name;
 			}).collect(Collectors.toList());
 
 			b = bRows.stream().map(s -> {
-				return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength - 1)); // why currPalindromeLength - 1?
+				String temp = s.substring(leftIndex, leftIndex + currPalindromeLength - 1);
+				System.out.println("looking for name for  " + temp);
+//				String reversedTemp = StringUtils.reverse(temp);
+				String name = StringUtils.defaultIfEmpty(namings.get(temp), "");
+				if (name != "") {
+					System.out.println("found name: " + name);
+				}
+				return name;
+//				return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength - 1)); // why currPalindromeLength - 1?
 			}).collect(Collectors.joining());
 		}
+		
 
+		
 		String a = listA.stream().collect(Collectors.joining());
 		String reversedA = StringUtils.reverse(a);
+		String reversedB = StringUtils.reverse(b);
 
-		System.out.println("Comparing a and b: " + reversedA + ", " + b);
 		//kmr.checkCommonPrefixAndStepOverMisMatch(kmr, palindromes, a, b, false);
-
 		String commonPrefix = this.LCP(reversedA, b);
 
+/*
+// Trying different way for mismatches
+		System.out.println("Comparing a and b forward: " + reversedA + ", " + b);
+		String commonPrefixForward = this.LCP(reversedA, b);
+		System.out.println("Comparing a and b backward: " + a + ", " + reversedB);
+		String commonPrefixBackward = this.LCP(a, reversedB);
+		System.out.println("commonPrefixForward: " + commonPrefixForward + "commonPrefixBackward: " + commonPrefixBackward);
+//		if (commonPrefixForward.length()+commonPrefixBackward.length())
+*/
 		if (commonPrefix.length() > 0) {
-			palindromes.add(StringUtils.reverse(reversedA) + b);
+			palindromes.add(StringUtils.reverse(reversedA) + b.substring(substringIndex));
 			int nonZeroBasedStartPosition = leftIndex + 1;
 			int endPosition = leftIndex + currPalindromeLength;
 			System.out.println("**added palindrome for: " + commonPrefix + " added palindrome for " + reversedA + " and " + b
 					+ " starting at column " + nonZeroBasedStartPosition + " ending at column: " + endPosition
-					+ "; (0-based) index of midpoint row: " + indexOfMidpointRow);
+					+ "; (0-based) index of midpoint row: " + bindexOfMidpointRow);
 		}
 	}
 	
-	private void lookForOddLengthPalindromes(int leftIndex, int currPalindromeLength, int indexOfMidpointRow) {
-		String commonPrefix;
-		List<String> a1List = text.subList(0, indexOfMidpointRow + 1).stream().map(s -> {
-			String reversedTemp = StringUtils.reverse(s.substring(leftIndex, leftIndex + currPalindromeLength));
-			return namings.get(reversedTemp) == null ? "" : namings.get(reversedTemp);
-		}).collect(Collectors.toList());
-		
-		List<String> bRows = text.subList(indexOfMidpointRow, numRows);
-		System.out.println(bRows);
-		String b = bRows.stream().map(s -> {
-			return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength));
-		}).collect(Collectors.joining());
-
-		if (a1List.isEmpty() || a1List.contains("")) {
-			a1List = text.subList(0, indexOfMidpointRow + 1).stream().map(s -> {
-				String temp = s.substring(leftIndex+1, leftIndex + currPalindromeLength); // should this be leftIndex +1 on both sides
-				System.out.println("looking for name for reverses of: " + temp);
-				String reversedTemp = StringUtils.reverse(temp);
-				String name = StringUtils.defaultIfEmpty(namings.get(reversedTemp), "");
-				return name;
-
-			}).collect(Collectors.toList());
-
-			b = text.subList(indexOfMidpointRow, numRows).stream().map(s -> {
-				return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength - 1));
-			}).collect(Collectors.joining());
-
-		}
-
-		String a1 = a1List.stream().collect(Collectors.joining());
-		a1 = StringUtils.reverse(a1);
-		System.out.println("Comparing a1 and b: " + a1 + ", " + b);
-		// kmr.checkCommonPrefixAndStepOverMisMatch(kmr, palindromes, a1, b, true);
-
-		commonPrefix = this.LCP(a1, b);
-		if (commonPrefix.length() > 1) {
-			palindromes.add(StringUtils.reverse(a1) + b.substring(1)); // doing substring 1 to not duplicate the
-																		// midpoint
-			int nonZeroBasedStartPosition = leftIndex + 1;
-			int endPosition = leftIndex + currPalindromeLength;
-			System.out.println("**added palindrome for " + a1 + " and " + b + " starting at column "
-					+ nonZeroBasedStartPosition + " ending at column: " + endPosition
-					+ "; (0-based) index of midpoint row: " + indexOfMidpointRow);
-
-		}
-	}
+//	private void lookForOddLengthPalindromes(int leftIndex, int currPalindromeLength, int indexOfMidpointRow) {
+//		String commonPrefix;
+//		List<String> aList = text.subList(0, indexOfMidpointRow + 1);
+//		System.out.println("oddLength, aRows:" + aList.toString());
+//		List<String> a1List = aList.stream().map(s -> {
+//			String temp = s.substring(leftIndex, leftIndex + currPalindromeLength );
+//			System.out.println("looking for name for  reverse of :" + temp);
+//			String reversedTemp = StringUtils.reverse(temp);
+//			String name = StringUtils.defaultIfEmpty(namings.get(reversedTemp), "");
+//			if (name != "") {
+//				System.out.println("found name: " + name);
+//			}
+//			return name;
+////			String reversedTemp = StringUtils.reverse(s.substring(leftIndex, leftIndex + currPalindromeLength));
+////			return namings.get(reversedTemp) == null ? "" : namings.get(reversedTemp);
+//		}).collect(Collectors.toList());
+//		
+//		List<String> bRows = text.subList(indexOfMidpointRow, numRows);
+//		System.out.println("oddLength, bRows:" + bRows.toString());
+//		String b = bRows.stream().map(s -> {
+//			String temp = s.substring(leftIndex, leftIndex + currPalindromeLength );
+//			System.out.println("looking for name for  " + temp);
+////			String reversedTemp = StringUtils.reverse(temp);
+//			String name = StringUtils.defaultIfEmpty(namings.get(temp), "");
+//			if (name != "") {
+//				System.out.println("found name: " + name);
+//			}
+//			return name;
+////			return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength));
+//		}).collect(Collectors.joining());
+//		System.out.println("hello");
+//
+//		boolean onlyEmpties = a1List.stream().allMatch(x -> x.equals(""));
+//
+//		if (a1List.isEmpty() || onlyEmpties) {
+//			a1List = aList.stream().map(s -> {
+//				String temp = s.substring(leftIndex+1, leftIndex + currPalindromeLength); // should this be leftIndex +1 on both sides
+//				System.out.println("looking for name for reverses of (a): " + temp);
+//				String reversedTemp = StringUtils.reverse(temp);
+//				String name = StringUtils.defaultIfEmpty(namings.get(reversedTemp), "");
+//				if (name != "") {
+//					System.out.println("found name: " + name);
+//				}
+//				return name;
+//
+//			}).collect(Collectors.toList());
+//
+//			b = text.subList(indexOfMidpointRow, numRows).stream().map(s -> {
+//				String temp = s.substring(leftIndex, leftIndex + currPalindromeLength - 1);
+//				System.out.println("looking for name for b " + temp);
+////				String reversedTemp = StringUtils.reverse(temp);
+//				String name = StringUtils.defaultIfEmpty(namings.get(temp), "");
+//				if (name != "") {
+//					System.out.println("found name: " + name);
+//				}
+//				return name;
+////				return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength - 1));
+//			}).collect(Collectors.joining());
+//
+//		}
+//		System.out.println("hello2");
+//
+//		String a1 = a1List.stream().collect(Collectors.joining());
+//		a1 = StringUtils.reverse(a1);
+//		System.out.println("Comparing a1 and b: " + a1 + ", " + b);
+//		// kmr.checkCommonPrefixAndStepOverMisMatch(kmr, palindromes, a1, b, true);
+//
+//		commonPrefix = this.LCP(a1, b);
+//		if (commonPrefix.length() > 1) {
+//			palindromes.add(StringUtils.reverse(a1) + b.substring(1)); // doing substring 1 to not duplicate the
+//																		// midpoint
+//			int nonZeroBasedStartPosition = leftIndex + 1;
+//			int endPosition = leftIndex + currPalindromeLength;
+//			System.out.println("**added palindrome for " + a1 + " and " + b + " starting at column "
+//					+ nonZeroBasedStartPosition + " ending at column: " + endPosition
+//					+ "; (0-based) index of midpoint row: " + indexOfMidpointRow);
+//
+//		}
+//	}
 
 	
 

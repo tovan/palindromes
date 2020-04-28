@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.lang3.StringUtils;
+
 
 public class KMRNamings {
 	
@@ -52,6 +54,8 @@ public class KMRNamings {
 		System.out.println("text: \n" + text);
 		System.out.println("numrows is: " + numRows + " and numCols is: " + numCols);
 	}
+	
+	
 
 	private char addNamesForText(ArrayList<String> text, int width, int numRows, int numCols, String[][] textNames,
 			Map<String, String> map, char nextName) {
@@ -63,20 +67,12 @@ public class KMRNamings {
 				
 				logger.log(Level.FINE, ("i= " + i + " j= " + j + " substr=" + substr));
 				// use substr as key
-				String /* char */ c;
-				if (!map.containsKey(substr)) {
+				nextName = addNameIfDoesntExist(map, nextName, substr);
+				//do the same for reversed substr
+				nextName = addNameIfDoesntExist(map, nextName, StringUtils.reverse(substr));
 
-					map.put(substr, String.valueOf(nextName));
-					c = /* (char) */ String.valueOf(nextName);
-					logger.log(Level.FINE, ("map did not contain " + substr + " new name is " + c));
-					nextName++; // incr for next new Name
-				} else {
-					String currentName = map.get(substr);
-					c = /* (char) */ String.valueOf(currentName);
-					// System.out.println("map contains " + substr + " with name " + c);
-				}
 				// set name in text of names
-				textNames[i][j] = c;
+//				textNames[i][j] = c;
 			} // end for j
 
 		// Display key and value for each entry
@@ -93,6 +89,21 @@ public class KMRNamings {
 			logger.log(Level.FINE, "\n");
 		}
 
+		return nextName;
+	}
+	private char addNameIfDoesntExist(Map<String, String> map, char nextName, String substr) {
+		String /* char */ c;
+		if (!map.containsKey(substr)) {
+
+			map.put(substr, String.valueOf(nextName));
+			c = /* (char) */ String.valueOf(nextName);
+			logger.log(Level.FINE, ("map did not contain " + substr + " new name is " + c));
+			nextName++; // incr for next new Name
+		} else {
+			String currentName = map.get(substr);
+			c = /* (char) */ String.valueOf(currentName);
+			// System.out.println("map contains " + substr + " with name " + c);
+		}
 		return nextName;
 	}
 
