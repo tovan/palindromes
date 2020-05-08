@@ -59,7 +59,7 @@ public class KMRhorizontal {
 
 	}
 
-	// main method
+		// main method
 	public String[] findPalindromes() {
 		// search input array for all maximal palindromes
 
@@ -71,8 +71,15 @@ public class KMRhorizontal {
 				// 2c. For each row - loop to go over rows 2 and up and treat each as a midpoint
 				for (int indexOfMidpointRow = 1; indexOfMidpointRow <= numRows
 						- 1; /* Math.ceil( new Double(numRows) / 2); */ indexOfMidpointRow++) {
-					// 2d. Add all palindromes within this rectangle area to palindrome list
-					searchRectangleForPalindrome(leftIndex, currPalindromeLength, indexOfMidpointRow);
+					for(int rowIndex = indexOfMidpointRow; rowIndex >= 1; rowIndex --) {
+						
+						// 2d. Add all palindromes within this rectangle area to palindrome list
+						int numberOfPalindromesFound = palindromes.size(); 
+						searchRectangleForPalindrome(leftIndex, currPalindromeLength, indexOfMidpointRow, rowIndex);
+						if(palindromes.size() > numberOfPalindromesFound) {
+							break; //exclude minimal palindromes
+						}
+					}
 				}
 			}
 		}
@@ -153,8 +160,9 @@ public class KMRhorizontal {
 
 		String commonPrefix = this.LCP(reversedA, b);
 
-		if (/* commonPrefix.length() + commonPrefix2.length() >= a.length() -1 */commonPrefix.length() == a.length()) {
-			addPalindrome(leftIndex, aindexOfMidpointRow, currPalindromeLength, b, a, commonPrefix);
+	 if (/* commonPrefix.length() + commonPrefix2.length() >= a.length() -1 */commonPrefix.length() == a.length()) {
+			String originalText = lookupNameForOriginalText(commonPrefix);
+			addPalindrome(StringUtils.reverse(originalText) + originalText, leftIndex, aindexOfMidpointRow, currPalindromeLength, b, a, commonPrefix);
 		} else {
 			// check for one-off
 			// 1. get first index of diff between 2 prefixes
@@ -163,44 +171,23 @@ public class KMRhorizontal {
 				// 2. inspect differences at that location
 				int indexOfFirstDiff = StringUtils.indexOfDifference(reversedA, b);
 				if (getNumDifferencesOfDivedIntoNames(reversedA.charAt(indexOfFirstDiff), b.charAt(indexOfFirstDiff)) == 1) {
-					addPalindrome(leftIndex, aindexOfMidpointRow, currPalindromeLength, b, reversedA, commonPrefix);
+					String originalText = aRows.stream().collect(Collectors.joining())+lookupNameForOriginalText(b);
+
+					addPalindrome(originalText, leftIndex, aindexOfMidpointRow, currPalindromeLength, b, reversedA, commonPrefix);
 				}
 			}
 		}
-
-		/*
-		 * // Trying different way for mismatches
-		 * System.out.println("Comparing a and b forward: " + reversedA + ", " + b);
-		 * String commonPrefixForward = this.LCP(reversedA, b);
-		 * System.out.println("Comparing a and b backward: " + a + ", " + reversedB);
-		 * String commonPrefixBackward = this.LCP(a, reversedB);
-		 * System.out.println("commonPrefixForward: " + commonPrefixForward +
-		 * "commonPrefixBackward: " + commonPrefixBackward); // if
-		 * (commonPrefixForward.length()+commonPrefixBackward.length())
-		 */
-//		if (commonPrefix.length() > 0) {
-//			palindromes.add(StringUtils.reverse(reversedA) + b.substring(substringIndex));
-//			int nonZeroBasedStartPosition = leftIndex + 1;
-//			int endPosition = leftIndex + currPalindromeLength;
-//			System.out.println("**added palindrome for: " + commonPrefix + " added palindrome for " + reversedA + " and " + b
-//					+ " starting at column " + nonZeroBasedStartPosition + " ending at column: " + endPosition
-//					+ "; (0-based) index of midpoint row: " + bindexOfMidpointRow);
-//		}
 	}
 
-	private void addPalindrome(int leftIndex, int indexOfMidpointRow, final int currNameLength, String b, String a,
+	private void addPalindrome(String originalText, int leftIndex, int indexOfMidpointRow, final int currNameLength, String b, String a,
 			String commonPrefix) {
-		String originalText = b + " " + a + ":";
-		for (int n = 0; n < commonPrefix.length(); n++) {
-			originalText += nameToTextyMap.get(String.valueOf(commonPrefix.charAt(n)));
-		}
 		int nonZeroBasedStartPosition = leftIndex + 1;
 		int endPosition = leftIndex + currNameLength;
-		System.out.println("**added palindrome for: " + commonPrefix + " added palindrome for " + a + " and " + b
+		System.out.println("**added palindrome for: " + commonPrefix + " which is the common prefix of " + a + " and " + b
 				+ " starting at column " + nonZeroBasedStartPosition + " ending at column: " + endPosition
 				+ "; (0-based) index of midpoint row: " + indexOfMidpointRow);
 
-		palindromes.add(StringUtils.reverse(originalText) + originalText);
+		palindromes.add(originalText);
 	}
 
 	private int getNumDifferencesOfDivedIntoNames(char a, char b) {
