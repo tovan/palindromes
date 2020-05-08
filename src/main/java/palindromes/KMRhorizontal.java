@@ -1,4 +1,4 @@
-package palindromes;
+package cisc7900;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,7 +31,7 @@ public class KMRhorizontal {
 	// these could be passed in to the constructor
 	final int palindromeMinLength = 3;
 	final int palindromeMaxLength = 4;
-	private Map<String, String> nameToTextyMap;
+	private Map<String, String> nameToTextMap;
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
 //		new KMRhorizontal("absolute/file/path goes here").findPalindromes();	
@@ -52,8 +52,8 @@ public class KMRhorizontal {
 		namings = new KMRNamings(logger).creatingNamings(text);
 		System.out.println("These are all the namings:");
 		System.out.println(namings);
-		nameToTextyMap = new HashMap<>();
-		namings.forEach((k, v) -> nameToTextyMap.put(v, k));
+		nameToTextMap = new HashMap<>();
+		namings.forEach((k, v) -> nameToTextMap.put(v, k));
 
 		palindromes = new ArrayList<String>();
 
@@ -71,8 +71,11 @@ public class KMRhorizontal {
 				// 2c. For each row - loop to go over rows 2 and up and treat each as a midpoint
 				for (int indexOfMidpointRow = 1; indexOfMidpointRow <= numRows
 						- 1; /* Math.ceil( new Double(numRows) / 2); */ indexOfMidpointRow++) {
-					// 2d. Add all palindromes within this rectangle area to palindrome list
-					searchRectangleForPalindrome(leftIndex, currPalindromeLength, indexOfMidpointRow);
+					for(int rowIndex = indexOfMidpointRow; rowIndex > 1; rowIndex --) {
+						
+						// 2d. Add all palindromes within this rectangle area to palindrome list
+						searchRectangleForPalindrome(leftIndex, currPalindromeLength, indexOfMidpointRow, rowIndex);
+					}
 				}
 			}
 		}
@@ -81,16 +84,17 @@ public class KMRhorizontal {
 	}
 
 	// for now assume only mismatches of only 1 are allowed, can refactor later
-	private void searchRectangleForPalindrome(int leftIndex, int currPalindromeLength, int indexOfMidpointRow) {
+	private void searchRectangleForPalindrome(int leftIndex, int currPalindromeLength, int indexOfMidpointRow, int rowIndex) {
 
-		lookForPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow, indexOfMidpointRow, 0, "even");
+		lookForPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow, indexOfMidpointRow, 0, rowIndex, "even");
 
-		lookForPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow + 1, indexOfMidpointRow, 1, "odd");
+		lookForPalindromes(leftIndex, currPalindromeLength, indexOfMidpointRow + 1, indexOfMidpointRow, 1, rowIndex, "odd");
 	}
 
 	private void lookForPalindromes(int leftIndex, int currPalindromeLength, int aindexOfMidpointRow,
-			int bindexOfMidpointRow, int substringIndex, String descr) {
-		List<String> aRows = text.subList(0, aindexOfMidpointRow);
+			int bindexOfMidpointRow, int substringIndex, int rowIndex, String descr) {
+		List<String> aRows = text.subList(aindexOfMidpointRow - rowIndex/*0*/, aindexOfMidpointRow);
+		
 		System.out.println(descr + " length, aRows: " + aRows.toString());
 		List<String> listA = aRows.stream().map(s -> {
 			String temp = s.substring(leftIndex, leftIndex + currPalindromeLength);
@@ -102,14 +106,13 @@ public class KMRhorizontal {
 			}
 			return name;
 		}).collect(Collectors.toList());
-		// b's left index must be updated if a's index is
 
-		int rightIndex;
+//		int rightIndex;
 //		rightIndex=numRows;
 //		System.out.println(
 //				"aIndexOfMidpointRow: " + aindexOfMidpointRow + ",  bindexOfMidpointRow: " + bindexOfMidpointRow);
 
-		rightIndex = Math.min(2 * aindexOfMidpointRow, numRows); // should this be aindexOfMidpointRow
+		int rightIndex = Math.min(aindexOfMidpointRow + rowIndex/*2 * aindexOfMidpointRow*/, numRows); // should this be aindexOfMidpointRow
 		List<String> bRows = text.subList(bindexOfMidpointRow, rightIndex);
 		System.out.println(descr + " length, bRows: " + bRows);
 		String b = bRows.stream().map(s -> {
@@ -122,34 +125,11 @@ public class KMRhorizontal {
 			}
 			return name;
 
-//			return namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength));
 		}).collect(Collectors.joining());
-
-		// (HG) this part is for mismatches
-		/*
-		 * // boolean onlyEmpties = listA.stream().allMatch(x -> x.equals(""));
-		 * 
-		 * if (listA.isEmpty() || listA.contains("")) { // no name for reversed a listA
-		 * = aRows.stream().map(s -> { String temp = s.substring(leftIndex+1, leftIndex
-		 * + currPalindromeLength); // should this be leftIndex +1 on both sides?
-		 * System.out.println("looking for name for reverses of: " + temp); String
-		 * reversedTemp = StringUtils.reverse(temp); String name =
-		 * StringUtils.defaultIfEmpty(namings.get(reversedTemp), ""); if (name != "") {
-		 * System.out.println("found name: " + name); } return name;
-		 * }).collect(Collectors.toList());
-		 * 
-		 * b = bRows.stream().map(s -> { String temp = s.substring(leftIndex, leftIndex
-		 * + currPalindromeLength - 1); System.out.println("looking for name for  " +
-		 * temp); // String reversedTemp = StringUtils.reverse(temp); String name =
-		 * StringUtils.defaultIfEmpty(namings.get(temp), ""); if (name != "") {
-		 * System.out.println("found name: " + name); } return name; // return
-		 * namings.get(s.substring(leftIndex, leftIndex + currPalindromeLength - 1)); //
-		 * why currPalindromeLength - 1? }).collect(Collectors.joining()); }
-		 */
 
 		String a = listA.stream().collect(Collectors.joining());
 		String reversedA = StringUtils.reverse(a);
-		String reversedB = StringUtils.reverse(b);
+//		String reversedB = StringUtils.reverse(b);
 
 		String commonPrefix = this.LCP(reversedA, b);
 
@@ -167,32 +147,13 @@ public class KMRhorizontal {
 				}
 			}
 		}
-
-		/*
-		 * // Trying different way for mismatches
-		 * System.out.println("Comparing a and b forward: " + reversedA + ", " + b);
-		 * String commonPrefixForward = this.LCP(reversedA, b);
-		 * System.out.println("Comparing a and b backward: " + a + ", " + reversedB);
-		 * String commonPrefixBackward = this.LCP(a, reversedB);
-		 * System.out.println("commonPrefixForward: " + commonPrefixForward +
-		 * "commonPrefixBackward: " + commonPrefixBackward); // if
-		 * (commonPrefixForward.length()+commonPrefixBackward.length())
-		 */
-//		if (commonPrefix.length() > 0) {
-//			palindromes.add(StringUtils.reverse(reversedA) + b.substring(substringIndex));
-//			int nonZeroBasedStartPosition = leftIndex + 1;
-//			int endPosition = leftIndex + currPalindromeLength;
-//			System.out.println("**added palindrome for: " + commonPrefix + " added palindrome for " + reversedA + " and " + b
-//					+ " starting at column " + nonZeroBasedStartPosition + " ending at column: " + endPosition
-//					+ "; (0-based) index of midpoint row: " + bindexOfMidpointRow);
-//		}
 	}
 
 	private void addPalindrome(int leftIndex, int indexOfMidpointRow, final int currNameLength, String b, String a,
 			String commonPrefix) {
 		String originalText = b + " " + a + ":";
 		for (int n = 0; n < commonPrefix.length(); n++) {
-			originalText += nameToTextyMap.get(String.valueOf(commonPrefix.charAt(n)));
+			originalText += nameToTextMap.get(String.valueOf(commonPrefix.charAt(n)));
 		}
 		int nonZeroBasedStartPosition = leftIndex + 1;
 		int endPosition = leftIndex + currNameLength;
@@ -204,8 +165,8 @@ public class KMRhorizontal {
 	}
 
 	private int getNumDifferencesOfDivedIntoNames(char a, char b) {
-		String aName = nameToTextyMap.get(String.valueOf(a));
-		String bName = nameToTextyMap.get(String.valueOf(b));
+		String aName = nameToTextMap.get(String.valueOf(a));
+		String bName = nameToTextMap.get(String.valueOf(b));
 
 		return getTotalDiffsBetweenStrings(aName, bName);
 
@@ -221,7 +182,6 @@ public class KMRhorizontal {
 				charDifferences[i] = a.charAt(i);
 			}
 		}
-//		System.out.println("getTotalDiffsBetweenStrings a: " + a + " b: " + b + " differences: " + Arrays.toString(charDifferences));
 		return differences;
 	}
 
